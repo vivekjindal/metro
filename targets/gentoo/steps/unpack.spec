@@ -21,8 +21,17 @@ case "$comp" in
 			tar xpf "$src" -C $[path/chroot] || exit 3
 		fi
 		;;
-	gz|xz)
+	gz)
 		tar xpf "$src" -C $[path/chroot] || exit 3
+		;;
+	xz)
+		if [ -e /usr/bin/pixz ]
+                then
+                        # Use pixz for multi-core acceleration
+			tar -Ipixz -xpf "$src" -C $[path/chroot] || exit 3
+                else
+                        tar xpf "$src" -C $[path/chroot] || exit 3
+                fi
 		;;
 	*)
 		echo "Unrecognized source compression for $src"
@@ -57,9 +66,17 @@ if [ "$[release/type]" == "official" ]; then
 				tar xpf  "$snap" -C $[path/chroot]$outdir || exit 4
 			fi
 			;;
-		gz|xz)
+		gz)
 			tar xpf "$snap" -C $[path/chroot]$outdir || exit 4
 			;;
+		xz)
+			if [ -e /usr/bin/pixz ]
+                        then
+				tar -Ipixz -xpf "$snap" -C $[path/chroot]$outdir || exit 4
+                        else
+                                tar xpf  "$snap" -C $[path/chroot]$outdir || exit 4
+                        fi
+                        ;;
 		*)
 			echo "Unrecognized source compression for $snap"
 			exit 1
@@ -104,6 +121,7 @@ EOF
 cat << "EOF" > $[path/chroot]/etc/locale.gen || exit 7
 $[[files/locale.gen]]
 EOF
+cp -r /root/metro/custom-subarch/* $[path/chroot]/var/git/meta-repo/kits/core-kit/profiles/funtoo/1.0/linux-gnu/arch/x86-64bit/subarch/
 for f in /etc/resolv.conf /etc/hosts
 do
 	if [ -e $f ]
